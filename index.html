@@ -537,17 +537,21 @@ function render(){
     let roomDone = 0;
 
     const itemsHtml = room.items.map(it => {
-      totalItems++;
-      if(it.d) totalDone++, roomDone++;
-      if(!it.d && it.t === 'e') pendingEssencial++;
-      if(!it.d && it.t === 'u') pendingUrgente++;
-      if(!it.d && it.p) remainingCost += Number(it.p);
+      if(it.d) roomDone++;
 
-      const matchesFilter =
-        currentFilter === 'all' ? true :
-        currentFilter === 'pending' ? !it.d :
-        currentFilter === 'essencial' ? it.t === 'e' :
-        currentFilter === 'urgente' ? it.t === 'u' : true;
+            const matchesFilter =
+                      currentFilter === 'all' ? true :
+                      currentFilter === 'pending' ? !it.d :
+                      currentFilter === 'essencial' ? it.t === 'e' :
+                      currentFilter === 'urgente' ? it.t === 'u' : true;
+
+            if(matchesFilter){
+                      totalItems++;
+                      if(it.d) totalDone++;
+                      if(!it.d && it.t === 'e') pendingEssencial++;
+                      if(!it.d && it.t === 'u') pendingUrgente++;
+                      if(!it.d && it.p) remainingCost += Number(it.p);
+            }
 
       if(editMode){
         return `<div class="item edit-row ${matchesFilter?'':'hidden'}" data-room="${room.id}" data-item="${it.id}">
