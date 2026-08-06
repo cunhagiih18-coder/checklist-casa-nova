@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist — Casa Nova</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --paper:#F5F0E6;
+    --paper-line:#E4DCC8;
+    --ink:#1B3A5C;
+    --ink-soft:#4A6280;
+    --ink-faint:#8697A8;
+    --clay:#C1502E;
+    --clay-bg:#F5DCD1;
+    --amber:#9A6B18;
+    --amber-bg:#F3E4C4;
+    --success:#3E6B4E;
+    --success-bg:#DCE8DD;
+    --card:#FCFAF4;
+    --danger:#B23A3A;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      linear-gradient(var(--paper-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--paper-line) 1px, transparent 1px);
+    background-size:28px 28px;
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    padding:32px 20px 64px;
+  }
+  .wrap{max-width:960px;margin:0 auto;}
+
+  header{
+    border:1.5px dashed var(--ink-faint);
+    border-radius:4px;
+    padding:24px 28px;
+    background:var(--card);
+    margin-bottom:28px;
+    position:relative;
+  }
+  header::before, header::after{
+    content:"+";
+    position:absolute;
+    color:var(--ink-faint);
+    font-size:14px;
+    top:-9px;
+  }
+  header::before{left:-7px;}
+  header::after{right:-7px;}
+  .top-row{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;}
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:0 0 6px;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:32px;
+    margin:0 0 18px;
+    color:var(--ink);
+  }
+  .edit-toggle{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:9px 16px;
+    border-radius:100px;
+    border:1.5px solid var(--ink);
+    background:var(--ink);
+    color:var(--paper);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .edit-toggle.off{
+    background:transparent;
+    color:var(--ink);
+  }
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+  .stat{border-left:2px solid var(--ink-faint); padding-left:10px;}
+  .stat .num{
+    font-family:'JetBrains Mono',monospace;
+    font-size:20px;
+    font-weight:500;
+    color:var(--ink);
+    display:block;
+  }
+  .stat .lbl{font-size:12px; color:var(--ink-soft);}
+  .progress-track{
+    height:8px;
+    background:var(--paper-line);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:16px;
+  }
+  .progress-fill{height:100%; background:var(--ink); border-radius:4px; transition:width .3s ease;}
+  .filters{display:flex; gap:8px; flex-wrap:wrap;}
+  .filter-btn{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:7px 14px;
+    border-radius:100px;
+    border:1px solid var(--ink-faint);
+    background:transparent;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .filter-btn.active{background:var(--ink); border-color:var(--ink); color:var(--paper);}
+  .filter-btn:hover:not(.active){border-color:var(--ink); color:var(--ink);}
+  .legend{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    margin-top:6px;
+  }
+
+  .rooms{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:18px;
+  }
+  .room{
+    background:var(--card);
+    border:1px solid var(--paper-line);
+    border-radius:4px;
+    padding:18px 18px 12px;
+  }
+  .room-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; gap:8px;}
+  .room-title{font-family:'Fraunces',serif; font-weight:600; font-size:17px; display:flex; align-items:center; gap:6px;}
+  .room-title input{
+    font-family:'Fraunces',serif; font-weight:600; font-size:15px; color:var(--ink);
+    border:1px solid var(--paper-line); border-radius:3px; padding:2px 6px; width:140px; background:var(--paper);
+  }
+  .room-count{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft); white-space:nowrap;}
+  .room-del{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--danger);
+    background:none; border:none; cursor:pointer; padding:2px 4px;
+  }
+  .room .progress-track{height:4px; margin-bottom:14px;}
+  .room .progress-fill{background:var(--clay);}
+  .room.complete .progress-fill{background:var(--success);}
+
+  .item{display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-top:1px solid var(--paper-line);}
+  .item:first-of-type{border-top:none;}
+  .item input[type=checkbox]{
+    appearance:none; width:17px; height:17px; margin-top:2px; flex:none;
+    border:1.5px solid var(--ink-faint); border-radius:3px; cursor:pointer; position:relative; background:var(--card);
+  }
+  .item input[type=checkbox]:checked{background:var(--success); border-color:var(--success);}
+  .item input[type=checkbox]:checked::after{
+    content:""; position:absolute; left:5px; top:1px; width:4px; height:9px;
+    border:solid var(--card); border-width:0 2px 2px 0; transform:rotate(40deg);
+  }
+  .item-body{flex:1; min-width:0;}
+  .item-name{font-size:14px; color:var(--ink); line-height:1.4;}
+  .item.done .item-name{color:var(--ink-faint); text-decoration:line-through;}
+  .item-note{font-size:12px; color:var(--ink-faint); font-style:italic;}
+  .item-meta{display:flex; align-items:center; gap:6px; margin-top:3px; flex-wrap:wrap;}
+  .tag{font-family:'JetBrains Mono',monospace; font-size:10.5px; padding:2px 7px; border-radius:100px; letter-spacing:0.02em;}
+  .tag.u{background:var(--clay-bg); color:var(--clay);}
+  .tag.e{background:var(--amber-bg); color:var(--amber);}
+  .tag.o{background:var(--paper-line); color:var(--ink-soft);}
+  .price{font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-soft);}
+  .price.est{color:var(--clay);}
+  .item.hidden{display:none;}
+  .room.hidden{display:none;}
+
+  .edit-row{display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .edit-row input[type=text], .edit-row input[type=number]{
+    font-family:'Inter',sans-serif; font-size:13px; padding:5px 8px;
+    border:1px solid var(--paper-line); border-radius:3px; background:var(--paper); color:var(--ink);
+  }
+  .edit-row input[type=text].name{flex:1; min-width:120px;}
+  .edit-row input[type=number]{width:80px;}
+  .edit-row select{
+    font-family:'JetBrains Mono',monospace; font-size:11px; padding:5px 6px;
+    border:1px solid var(--paper-line); border-radius:3px; background:var(--paper); color:var(--ink);
+  }
+  .item-del{
+    font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--danger);
+    background:none; border:none; cursor:pointer; padding:0 4px; line-height:1;
+  }
+  .add-item-row{margin-top:10px; padding-top:10px; border-top:1px dashed var(--paper-line);}
+  .add-item-btn{
+    font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--ink-soft);
+    background:none; border:1px dashed var(--ink-faint); border-radius:4px; padding:6px 10px; cursor:pointer; width:100%;
+  }
+  .add-item-btn:hover{color:var(--ink); border-color:var(--ink);}
+
+  .add-room-card{
+    border:1.5px dashed var(--ink-faint); border-radius:4px; padding:18px;
+    display:flex; align-items:center; justify-content:center; min-height:80px;
+  }
+  .add-room-btn{
+    font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--ink-soft);
+    background:none; border:none; cursor:pointer;
+  }
+  .add-room-btn:hover{color:var(--ink);}
+
+  .reset-row{text-align:center; margin-top:28px; display:flex; justify-content:center; gap:16px; flex-wrap:wrap;}
+  .reset-btn, .sync-btn{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint);
+    background:none; border:none; cursor:pointer; text-decoration:underline;
+  }
+  .sync-banner{
+    border:1.5px dashed var(--clay); border-radius:4px; padding:14px 18px;
+    background:var(--clay-bg); margin-bottom:20px; font-size:13px; color:var(--clay);
+  }
+  .sync-banner p{margin:0 0 10px;}
+  .sync-banner .row{display:flex; gap:8px; flex-wrap:wrap;}
+  .sync-banner input[type=text]{
+    flex:1; min-width:220px; font-family:'JetBrains Mono',monospace; font-size:12px;
+    padding:7px 10px; border:1px solid var(--clay); border-radius:3px; background:var(--card); color:var(--ink);
+  }
+  .sync-banner button{
+    font-family:'JetBrains Mono',monospace; font-size:12px; padding:7px 14px;
+    border-radius:4px; border:1px solid var(--clay); background:var(--clay); color:var(--card); cursor:pointer;
+  }
+  .sync-banner .dismiss{
+    background:none; border:none; color:var(--clay); text-decoration:underline; cursor:pointer; font-size:11px; margin-top:8px;
+  }
+  .sync-status{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint);
+  }
+  .sync-status.on{color:var(--success);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="sync-banner" id="sync-banner" style="display:none;">
+    <p>Sincronização entre aparelhos ainda não configurada — a lista está salva só neste navegador. Cole abaixo a URL do Firebase Realtime Database (veja o passo a passo que te mandei junto com este arquivo).</p>
+    <div class="row">
+      <input type="text" id="sync-url-input" placeholder="https://seu-projeto-default-rtdb.firebaseio.com">
+      <button id="sync-connect-btn">conectar</button>
+    </div>
+    <button class="dismiss" id="sync-dismiss-btn">continuar só neste aparelho</button>
+  </div>
+
+  <header>
+    <div class="top-row">
+      <div>
+        <p class="eyebrow">Planta de mudança</p>
+        <h1>Checklist — casa nova</h1>
+      </div>
+      <button class="edit-toggle off" id="edit-toggle">editar lista</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="progress-track"><div class="progress-fill" id="overall-fill" style="width:0%"></div></div>
+    <div class="filters">
+      <button class="filter-btn active" data-filter="all">todos</button>
+      <button class="filter-btn" data-filter="pending">pendentes</button>
+      <button class="filter-btn" data-filter="essencial">essenciais</button>
+      <button class="filter-btn" data-filter="urgente">urgentes</button>
+    </div>
+    <p class="legend"><span class="price est">~R$</span> = preço médio de mercado pesquisado · sem o til é valor anotado por vocês</p>
+  </header>
+
+  <div class="rooms" id="rooms"></div>
+
+  <div class="reset-row">
+    <button class="reset-btn" id="reset-btn">restaurar lista original</button>
+    <span class="sync-status" id="sync-status">sincronização: desligada</span>
+    <button class="sync-btn" id="sync-settings-btn">configurar sincronização</button>
+  </div>
+
+</div>
+
+<script>
+const DEFAULT_DATA = [
+  {icon:"🍳", name:"Cozinha", items:[
+    {n:"Panos de prato",t:"e",p:30,d:true},
+    {n:"Móvel/suporte para fogão",t:"e",p:315},
+    {n:"Liquidificador",t:"e",p:120,note:"sem urgência"},
+    {n:"Armário de cozinha",p:450,est:true},
+    {n:"Kit utilidades de silicone",t:"e",p:60},
+    {n:"Saleiro",t:"e",p:20},
+    {n:"Porta temperos",t:"e",p:60},
+    {n:"Kit de facas (boas)",t:"e",p:100,est:true},
+    {n:"Panelas",t:"e",note:"avaliar",p:250,est:true},
+    {n:"Frigideiras",t:"e",p:80,est:true},
+    {n:"Panela de pressão",t:"e",note:"avaliar",p:180,est:true},
+    {n:"Torneira elétrica",t:"e",p:315},
+    {n:"Filtro de água",p:150},
+    {n:"Bule / garrafa de café / coador",t:"e",p:60,est:true},
+    {n:"Lixeiro",t:"e",p:50,est:true},
+    {n:"Potes de vidro/plástico",t:"e",d:true},
+    {n:"Forma de gelo",t:"e",d:true},
+    {n:"Máquina de fazer pão",t:"o"},
+    {n:"Forno",t:"e",p:475,d:true},
+    {n:"Microondas",d:true},
+    {n:"Mesa e cadeiras",t:"u",p:1000,d:true},
+    {n:"Pipoqueira",d:true},
+    {n:"Tábua de cortar grande",d:true},
+    {n:"Colher de pau",d:true},
+    {n:"Pegador de macarrão",d:true},
+    {n:"Ralador",t:"e",d:true},
+    {n:"Conjunto de talheres",d:true},
+    {n:"Jogo de pratos",d:true},
+    {n:"Jogo de copos e xícaras",d:true},
+    {n:"Jogo de taças",d:true},
+    {n:"Travessas de vidro",d:true},
+    {n:"Jarra de suco",d:true},
+    {n:"Chaleira elétrica",d:true},
+    {n:"Botijão de gás",d:true},
+    {n:"Cooktop ou fogão",note:"ver o do Ewald",d:true},
+    {n:"Air fryer",note:"catar de casa",d:true},
+    {n:"Sanduicheira",note:"catar de casa",d:true},
+    {n:"Geladeira",t:"u",d:true},
+    {n:"Escorredor de louça",t:"o",p:45,est:true},
+    {n:"Formas de bolo",t:"o",p:90},
+    {n:"Jogo de sobremesa",t:"o",p:60,est:true},
+    {n:"Peneiras",t:"o",p:25,est:true},
+    {n:"Porta detergente",t:"o",p:20,est:true},
+  ]},
+  {icon:"🧺", name:"Lavanderia", items:[
+    {n:"Máquina de lavar",t:"u",d:true},
+    {n:"Secadora",p:2200,est:true},
+    {n:"Varal",p:80,est:true},
+    {n:"Balde",p:20,est:true},
+    {n:"Vassoura",p:25,est:true},
+    {n:"Rodo/mop",p:35,est:true},
+    {n:"Panos de limpeza",p:20,est:true},
+    {n:"Pá de limpeza",p:15,est:true},
+    {n:"Grampos",p:10,est:true},
+    {n:"Cesto para roupa suja",d:true},
+    {n:"Aspirador de pó",p:300,est:true},
+    {n:"Lava jato",p:350,est:true},
+    {n:"Mangueira",p:60,est:true},
+  ]},
+  {icon:"🛋️", name:"Sala", items:[
+    {n:"Sofá",p:1500,est:true},
+    {n:"Almofadas",p:80,est:true},
+    {n:"Painel para TV",p:350,est:true},
+    {n:"TV",d:true},
+    {n:"Cortina, varão e suporte",p:200,est:true},
+  ]},
+  {icon:"🧸", name:"Quarto do Joaquim", items:[
+    {n:"Cama de solteiro",d:true},
+    {n:"Colchão",p:500,est:true},
+    {n:"Lençol",p:90,est:true},
+    {n:"Cobertor",d:true},
+    {n:"Travesseiro",d:true},
+    {n:"Guarda-roupa (ou espaço para roupas)",d:true},
+    {n:"Baú ou caixa para brinquedos",d:true},
+    {n:"Cortina, varão e suporte",p:150,est:true},
+  ]},
+  {icon:"🚿", name:"Banheiro", items:[
+    {n:"Chuveiro",d:true},
+    {n:"Armário ou prateleira",p:150,est:true},
+    {n:"Espelho",p:100,est:true},
+    {n:"Lixeira",d:true},
+    {n:"Suporte para papel higiênico",d:true},
+    {n:"Suporte para shampoo/condicionador e afins",p:40,est:true},
+    {n:"Escova sanitária",d:true},
+    {n:"Tapete",p:40,est:true},
+    {n:"Porta-toalha",p:35,est:true},
+    {n:"Toalhas de banho",d:true},
+    {n:"Toalhas de rosto",d:true},
+    {n:"Secador de cabelo",d:true},
+    {n:"Babyliss",d:true},
+  ]},
+  {icon:"🛏️", name:"Quarto", items:[
+    {n:"Cama",d:true},{n:"Colchão",d:true},{n:"Lençol",d:true},{n:"Cobertor",d:true},
+    {n:"Travesseiros",d:true},{n:"Guarda-roupa",d:true},{n:"Ar-condicionado ou ventilador",d:true},
+    {n:"Espelho",d:true},{n:"Cortina, varão e suporte",d:true},
+  ]},
+  {icon:"💻", name:"Trabalho / escritório", items:[
+    {n:"Escrivaninha",d:true},{n:"Cadeira",d:true},{n:"Computador",d:true},{n:"Internet instalada"},
+  ]},
+  {icon:"🐾", name:"Pets", items:[
+    {n:"Potes de ração e água",d:true},{n:"Caixa de areia (gato)",d:true},
+    {n:"Pá para areia",d:true},{n:"Caminha ou espaço definido para o cachorro",d:true},
+  ]},
+  {icon:"🚗", name:"Garagem", items:[
+    {n:"Vaga para carro"},
+  ]},
+];
+
+const TAG_LABEL = {u:"urgente", e:"essencial", o:"opcional"};
+const STORAGE_KEY = "casa-checklist-v2";
+const SYNC_URL_KEY = "casa-checklist-sync-url";
+const DEFAULT_SYNC_URL = "https://casa-nova-d4a76-default-rtdb.firebaseio.com";
+
+let rooms = [];
+let editMode = false;
+let currentFilter = "all";
+let idCounter = 1;
+let syncUrl = null;
+let saveTimer = null;
+let pollTimer = null;
+let lastSyncedJson = null;
+let justSaved = false;
+
+function withIds(data){
+  return data.map(room => ({
+    id: "r" + (idCounter++),
+    icon: room.icon,
+    name: room.name,
+    items: room.items.map(it => ({
+      id: "i" + (idCounter++),
+      n: it.n, t: it.t || "", p: it.p || null, d: !!it.d, est: !!it.est, note: it.note || ""
+    }))
+  }));
+}
+
+function setSyncStatus(text, on){
+  const el = document.getElementById('sync-status');
+  el.textContent = "sincronização: " + text;
+  el.classList.toggle('on', !!on);
+}
+
+async function fetchRemote(){
+  if(!syncUrl) return null;
+  try{
+    const res = await fetch(syncUrl.replace(/\/$/,'') + '/checklist.json');
+    if(!res.ok) throw new Error('fetch failed');
+    const data = await res.json();
+    return data;
+  }catch(e){
+    return undefined;
+  }
+}
+
+async function pushRemote(){
+  if(!syncUrl) return;
+  try{
+    justSaved = true;
+    const body = JSON.stringify(rooms);
+    await fetch(syncUrl.replace(/\/$/,'') + '/checklist.json', {
+      method: 'PUT',
+      headers: {'Content-Type':'application/json'},
+      body
+    });
+    lastSyncedJson = body;
+    setSyncStatus('ativa · salvo agora', true);
+  }catch(e){
+    setSyncStatus('ativa · falha ao salvar (verifique internet)', false);
+  }finally{
+    setTimeout(() => { justSaved = false; }, 1500);
+  }
+}
+
+async function loadState(){
+  syncUrl = localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL;
+  let localRooms = null;
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) localRooms = JSON.parse(raw);
+  }catch(e){}
+
+  if(syncUrl){
+    document.getElementById('sync-banner').style.display = 'none';
+    setSyncStatus('conectando…', false);
+    const remote = await fetchRemote();
+    if(remote && Array.isArray(remote) && remote.length){
+      rooms = remote;
+      lastSyncedJson = JSON.stringify(remote);
+      setSyncStatus('ativa', true);
+    } else if(remote === undefined){
+      rooms = localRooms || withIds(DEFAULT_DATA);
+      setSyncStatus('sem conexão · usando cópia local', false);
+    } else {
+      rooms = localRooms || withIds(DEFAULT_DATA);
+      pushRemote();
+    }
+    startPolling();
+  } else {
+    rooms = localRooms || withIds(DEFAULT_DATA);
+    document.getElementById('sync-banner').style.display = 'block';
+    setSyncStatus('desligada', false);
+  }
+  syncMaxId();
+}
+
+function syncMaxId(){
+  rooms.forEach(r => {
+    const rn = parseInt((r.id||'r0').slice(1)); if(rn >= idCounter) idCounter = rn + 1;
+    r.items.forEach(it => {
+      const n = parseInt((it.id||'i0').slice(1)); if(n >= idCounter) idCounter = n + 1;
+    });
+  });
+}
+
+function saveState(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(rooms)); }catch(e){}
+  if(syncUrl){
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(pushRemote, 500);
+  }
+}
+
+function startPolling(){
+  clearInterval(pollTimer);
+  pollTimer = setInterval(async () => {
+    if(justSaved) return;
+    const active = document.activeElement;
+    if(active && (active.tagName === 'INPUT' || active.tagName === 'SELECT') && active.closest('.edit-row')) return;
+    const remote = await fetchRemote();
+    if(remote === undefined){ setSyncStatus('sem conexão · usando cópia local', false); return; }
+    const remoteJson = JSON.stringify(remote);
+    if(remote && Array.isArray(remote) && remoteJson !== lastSyncedJson){
+      rooms = remote;
+      lastSyncedJson = remoteJson;
+      syncMaxId();
+      try{ localStorage.setItem(STORAGE_KEY, remoteJson); }catch(e){}
+      setSyncStatus('ativa · atualizado', true);
+      render();
+    }
+  }, 5000);
+}
+
+function fmtPrice(p){ return "R$ " + Number(p).toLocaleString('pt-BR'); }
+
+function render(){
+  const roomsEl = document.getElementById('rooms');
+  roomsEl.innerHTML = "";
+
+  let totalItems=0, totalDone=0, pendingEssencial=0, pendingUrgente=0, remainingCost=0;
+
+  rooms.forEach(room => {
+    const roomEl = document.createElement('div');
+    roomEl.className = 'room';
+    let roomDone = 0;
+
+    const itemsHtml = room.items.map(it => {
+      totalItems++;
+      if(it.d) totalDone++, roomDone++;
+      if(!it.d && it.t === 'e') pendingEssencial++;
+      if(!it.d && it.t === 'u') pendingUrgente++;
+      if(!it.d && it.p) remainingCost += Number(it.p);
+
+      const matchesFilter =
+        currentFilter === 'all' ? true :
+        currentFilter === 'pending' ? !it.d :
+        currentFilter === 'essencial' ? it.t === 'e' :
+        currentFilter === 'urgente' ? it.t === 'u' : true;
+
+      if(editMode){
+        return `<div class="item edit-row ${matchesFilter?'':'hidden'}" data-room="${room.id}" data-item="${it.id}">
+          <input type="checkbox" ${it.d?'checked':''} data-action="toggle">
+          <input type="text" class="name" value="${escapeAttr(it.n)}" data-field="n" placeholder="nome do item">
+          <select data-field="t">
+            <option value="" ${it.t===''?'selected':''}>sem tag</option>
+            <option value="u" ${it.t==='u'?'selected':''}>urgente</option>
+            <option value="e" ${it.t==='e'?'selected':''}>essencial</option>
+            <option value="o" ${it.t==='o'?'selected':''}>opcional</option>
+          </select>
+          <input type="number" data-field="p" value="${it.p||''}" placeholder="preço">
+          <button class="item-del" data-action="delete" title="remover item">✕</button>
+        </div>`;
+      }
+
+      const tagHtml = it.t ? `<span class="tag ${it.t}">${TAG_LABEL[it.t]}</span>` : "";
+      const priceHtml = it.p ? `<span class="price ${it.est?'est':''}">${it.est?'~':''}${fmtPrice(it.p)}</span>` : "";
+      const noteHtml = it.note ? `<div class="item-note">${escapeHtml(it.note)}</div>` : "";
+
+      return `<label class="item ${it.d?'done':''} ${matchesFilter?'':'hidden'}" data-room="${room.id}" data-item="${it.id}">
+        <input type="checkbox" ${it.d?'checked':''} data-action="toggle">
+        <div class="item-body">
+          <div class="item-name">${escapeHtml(it.n)}</div>
+          ${noteHtml}
+          <div class="item-meta">${tagHtml}${priceHtml}</div>
+        </div>
+      </label>`;
+    }).join("");
+
+    const pct = room.items.length ? Math.round((roomDone/room.items.length)*100) : 0;
+    if(pct === 100 && room.items.length) roomEl.classList.add('complete');
+
+    const titleHtml = editMode
+      ? `<span class="room-title">${room.icon} <input type="text" value="${escapeAttr(room.name)}" data-room="${room.id}" data-action="rename"></span>`
+      : `<span class="room-title">${room.icon} ${escapeHtml(room.name)}</span>`;
+
+    const delRoomHtml = editMode ? `<button class="room-del" data-room="${room.id}" data-action="delete-room">remover cômodo</button>` : "";
+
+    const addItemHtml = editMode ? `<div class="add-item-row"><button class="add-item-btn" data-room="${room.id}" data-action="add-item">+ adicionar item</button></div>` : "";
+
+    roomEl.innerHTML = `
+      <div class="room-head">
+        ${titleHtml}
+        <span class="room-count">${roomDone}/${room.items.length}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+      ${itemsHtml}
+      ${addItemHtml}
+      ${delRoomHtml}
+    `;
+    roomsEl.appendChild(roomEl);
+  });
+
+  if(editMode){
+    const addRoomEl = document.createElement('div');
+    addRoomEl.className = 'add-room-card';
+    addRoomEl.innerHTML = `<button class="add-room-btn" id="add-room-btn">+ novo cômodo</button>`;
+    roomsEl.appendChild(addRoomEl);
+    document.getElementById('add-room-btn').addEventListener('click', addRoom);
+  }
+
+  const overallPct = totalItems ? Math.round((totalDone/totalItems)*100) : 0;
+  document.getElementById('overall-fill').style.width = overallPct + "%";
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><span class="num">${totalDone}/${totalItems}</span><span class="lbl">itens resolvidos</span></div>
+    <div class="stat"><span class="num">${pendingUrgente}</span><span class="lbl">urgentes pendentes</span></div>
+    <div class="stat"><span class="num">${pendingEssencial}</span><span class="lbl">essenciais pendentes</span></div>
+    <div class="stat"><span class="num">${fmtPrice(remainingCost)}</span><span class="lbl">estimado restante</span></div>
+  `;
+
+  attachHandlers();
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+}
+function escapeAttr(s){
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+function findItem(roomId, itemId){
+  const room = rooms.find(r => r.id === roomId);
+  if(!room) return null;
+  const item = room.items.find(i => i.id === itemId);
+  return {room, item};
+}
+
+function attachHandlers(){
+  document.querySelectorAll('[data-action="toggle"]').forEach(cb => {
+    cb.addEventListener('change', e => {
+      const row = e.target.closest('[data-item]');
+      const {item} = findItem(row.dataset.room, row.dataset.item) || {};
+      if(item){ item.d = e.target.checked; saveState(); render(); }
+    });
+  });
+
+  document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const row = e.target.closest('[data-item]');
+      if(!confirm('Remover este item?')) return;
+      const room = rooms.find(r => r.id === row.dataset.room);
+      room.items = room.items.filter(i => i.id !== row.dataset.item);
+      saveState(); render();
+    });
+  });
+
+  document.querySelectorAll('[data-field]').forEach(input => {
+    input.addEventListener('input', e => {
+      const row = e.target.closest('[data-item]');
+      const {item} = findItem(row.dataset.room, row.dataset.item) || {};
+      if(!item) return;
+      const field = e.target.dataset.field;
+      if(field === 'p'){
+        item.p = e.target.value ? Number(e.target.value) : null;
+        item.est = false;
+      } else {
+        item[field] = e.target.value;
+      }
+      saveState();
+    });
+  });
+
+  document.querySelectorAll('[data-action="rename"]').forEach(input => {
+    input.addEventListener('input', e => {
+      const room = rooms.find(r => r.id === e.target.dataset.room);
+      if(room){ room.name = e.target.value; saveState(); }
+    });
+  });
+
+  document.querySelectorAll('[data-action="delete-room"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      if(!confirm('Remover este cômodo e todos os itens dele?')) return;
+      rooms = rooms.filter(r => r.id !== e.target.dataset.room);
+      saveState(); render();
+    });
+  });
+
+  document.querySelectorAll('[data-action="add-item"]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      const room = rooms.find(r => r.id === e.target.dataset.room);
+      if(!room) return;
+      room.items.push({id:"i"+(idCounter++), n:"", t:"", p:null, d:false, est:false, note:""});
+      saveState(); render();
+    });
+  });
+}
+
+function addRoom(){
+  const name = prompt('Nome do novo cômodo:');
+  if(!name) return;
+  const icon = prompt('Um emoji pra representar (opcional):', '📦') || '📦';
+  rooms.push({id:"r"+(idCounter++), icon, name, items:[]});
+  saveState(); render();
+}
+
+document.getElementById('edit-toggle').addEventListener('click', () => {
+  editMode = !editMode;
+  const btn = document.getElementById('edit-toggle');
+  btn.textContent = editMode ? 'concluir edição' : 'editar lista';
+  btn.classList.toggle('off', !editMode);
+  render();
+});
+
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.getAttribute('data-filter');
+    render();
+  });
+});
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if(!confirm('Restaurar a lista original? Isso apaga os itens e alterações que vocês adicionaram.')) return;
+  rooms = withIds(DEFAULT_DATA);
+  saveState(); render();
+});
+
+document.getElementById('sync-connect-btn').addEventListener('click', async () => {
+  const val = document.getElementById('sync-url-input').value.trim();
+  if(!val) return;
+  localStorage.setItem(SYNC_URL_KEY, val);
+  document.getElementById('sync-banner').style.display = 'none';
+  await init();
+});
+
+document.getElementById('sync-dismiss-btn').addEventListener('click', () => {
+  document.getElementById('sync-banner').style.display = 'none';
+});
+
+document.getElementById('sync-settings-btn').addEventListener('click', () => {
+  const current = localStorage.getItem(SYNC_URL_KEY) || DEFAULT_SYNC_URL;
+  const val = prompt('URL do Firebase Realtime Database (deixe em branco para desligar a sincronização):', current);
+  if(val === null) return;
+  if(val.trim()){
+    localStorage.setItem(SYNC_URL_KEY, val.trim());
+  } else {
+    localStorage.removeItem(SYNC_URL_KEY);
+    clearInterval(pollTimer);
+  }
+  init();
+});
+
+async function init(){
+  await loadState();
+  render();
+}
+
+init();
+</script>
+</body>
+</html>
